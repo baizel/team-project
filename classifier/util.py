@@ -36,11 +36,11 @@ def readImageForPrediction(filePath):
 
 
 def __goBackOneDir(path):
-    splitOut = path.split("/")
-    splitOut.remove(splitOut[-2])
+    splitOut = path.split(os.sep)
+    splitOut.remove(splitOut[-1])
     out = splitOut[0]
     for x in range(1, len(splitOut)):
-        out = out + "/" + splitOut[x]
+        out = os.path.join(out, splitOut[x])
     return out
 
 
@@ -55,8 +55,10 @@ def getDataSet(inPathRoot: str, outPathRoot: str, runPreProcessor=True, trainTes
     out = __goBackOneDir(outPathRoot)
     if runPreProcessor:
         batchResizeAndSplit(inPathRoot, outPathRoot, trainTestSplit)
-    train = tf.data.Dataset.list_files(os.path.join(out, "train", "*", "*.jpg"))
-    test = tf.data.Dataset.list_files(os.path.join(out, "test", "*", "*.jpg"))
+    trainDir = os.path.join(out, "train", "*", "*.jpg")
+    testDir = os.path.join(out, "test", "*", "*.jpg")
+    train = tf.data.Dataset.list_files(trainDir)
+    test = tf.data.Dataset.list_files(testDir)
     return train.map(__processPath, num_parallel_calls=AUTOTUNE), test.map(__processPath, num_parallel_calls=AUTOTUNE)
 
 
