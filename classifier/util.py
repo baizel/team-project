@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import os
 from typing import Tuple
 
 import numpy as np
@@ -54,13 +55,13 @@ def getDataSet(inPathRoot: str, outPathRoot: str, runPreProcessor=True, trainTes
     out = __goBackOneDir(outPathRoot)
     if runPreProcessor:
         batchResizeAndSplit(inPathRoot, outPathRoot, trainTestSplit)
-    train = tf.data.Dataset.list_files(out + "train/*/*.jpg")
-    test = tf.data.Dataset.list_files(out + "test/*/*.jpg")
+    train = tf.data.Dataset.list_files(os.path.join(out, "train", "*", "*.jpg"))
+    test = tf.data.Dataset.list_files(os.path.join(out, "test", "*", "*.jpg"))
     return train.map(__processPath, num_parallel_calls=AUTOTUNE), test.map(__processPath, num_parallel_calls=AUTOTUNE)
 
 
 def __getLabel(filePath):
-    return tf.strings.split(filePath, "/")[-2] == CLASS_NAMES
+    return tf.strings.split(filePath, os.sep)[-2] == CLASS_NAMES
 
 
 def __decodeImg(img):

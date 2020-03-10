@@ -41,8 +41,8 @@ class BasicTensorFlowModel:
     def train(self,
               trainTestSplit=(80, 20),
               runPreProcessor=False,
-              rawImagePath="data/GTSRB/Final_Training/Images/",
-              processedOutPath="data/processed/resized/jpg/"
+              rawImagePath=os.path.join("data", "GTSRB", "Final_Training", "Images"),
+              processedOutPath=os.path.join("data", "processed", "resized", "jpg")
               ):
         trainDataSet, testDataSet = datasetUtil.getDataSet(rawImagePath, processedOutPath, runPreProcessor, trainTestSplit=trainTestSplit)
         trainDataSet = trainDataSet.batch(batch_size)

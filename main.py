@@ -9,7 +9,7 @@ if __name__ == '__main__':
     outPathRoot = "data/processed/resized/jpg/"
 
     # Uncomment to resize and split images
-    # util.batchResizeAndSplit(inPathRoot, outPathRoot, (80, 20))
+    util.batchResizeAndSplit(inPathRoot, outPathRoot, (80, 20))
 
     """
     Loading a saved model  and predicting an  image from the test data 
