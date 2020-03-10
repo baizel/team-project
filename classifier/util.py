@@ -51,10 +51,9 @@ def batchResizeAndSplit(inPathRoot: str, outPathRoot: str, trainTestSplit=(80, 2
 
 
 def getDataSet(inPathRoot: str, outPathRoot: str, runPreProcessor=True, trainTestSplit=(80, 20)) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
-    out = __goBackOneDir(inPathRoot)
+    out = __goBackOneDir(outPathRoot)
     if runPreProcessor:
         batchResizeAndSplit(inPathRoot, outPathRoot, trainTestSplit)
-
     train = tf.data.Dataset.list_files(out + "train/*/*.jpg")
     test = tf.data.Dataset.list_files(out + "test/*/*.jpg")
     return train.map(__processPath, num_parallel_calls=AUTOTUNE), test.map(__processPath, num_parallel_calls=AUTOTUNE)
