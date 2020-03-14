@@ -7,12 +7,19 @@ import numpy as np
 import tensorflow as tf
 import operator
 
+from PIL import Image
+
 from preprocess.script import PreProcessImages
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 CLASS_NAMES = np.array(["{:05d}".format(x) for x in range(0, 43)])
 
+
+def arrayToImage(arr):
+    img = Image.fromarray(np.uint8(arr * 255))
+    img.show()
+    return img
 
 def getPredictedLabel(mappedValues):
     key = max(mappedValues.items(), key=operator.itemgetter(1))[0]

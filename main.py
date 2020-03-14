@@ -1,4 +1,4 @@
-from classifier.models import BasicTensorFlowModel
+from classifier.models import BasicTensorFlowModel, AnotherModel
 from preprocess.script import PreProcessImages
 import numpy as np
 from PIL import Image, ImageEnhance
@@ -15,21 +15,21 @@ if __name__ == '__main__':
     Loading a saved model  and predicting an  image from the test data 
     """
 
-    savedModel = BasicTensorFlowModel().loadSavedModel()
+    savedModel = BasicTensorFlowModel().loadSavedModel("AnotherOne")
     # Image path needs to change on specific computers as train and test are random
-    toPredict = util.readImageForPrediction("data/processed/resized/test/00040/00000_00006.jpg")
+    toPredict = util.readImageForPrediction("genattack/Adversarial.jpg")
     res = savedModel.predict(toPredict)
     print(util.getPredictedLabel(util.predictedLabelToMap(res)))
 
     """
-    Basic perturbation off changing brightness of image to miss classify the image 
+    Basic perturbation off changing brightness of image to miss classify the image
     """
     # Image path needs to change on specific computers as train and test are random
-    newImg = Image.open("data/processed/resized/test/00040/00000_00006.jpg")
-    edit = ImageEnhance.Brightness(newImg)
-    edited = edit.enhance(0.96)
-    edited.show()
-    edited.save("Test.jpg")
-    toPredict = util.readImageForPrediction("Test.jpg")
-    res = savedModel.predict(toPredict)
-    print(util.getPredictedLabel(util.predictedLabelToMap(res)))
+
+    # edit = ImageEnhance.Brightness(newImg)
+    # edited = edit.enhance(0.00)
+    # edited.show()
+    # edited.save("Test.jpg")
+    # toPredict = util.readImageForPrediction("data/processed/resized/test/00040/00002_00016.jpg")
+    # res = savedModel.predict(toPredict)
+    # print(util.getPredictedLabel(util.predictedLabelToMap(res)))
