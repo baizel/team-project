@@ -1,51 +1,50 @@
+import os
+import random
+
 from classifier.models import ModelTrainer
 from genattack.GenAttack import attack as genAttack
-from preprocess.script import PreProcessImages
-import numpy as np
-from PIL import Image, ImageEnhance
+from bruteforce.BruteForce import attack as bruteForceAttack
 import classifier.util as util
 
 
-def getModelB():
-    return ModelTrainer().loadSavedModel("ModelB.h5")
+def getAllTestFiles(rootDir):
+    files = [os.path.join(path, filename)
+             for path, dirs, files in os.walk(rootDir)
+             for filename in files
+             if filename.endswith(".jpg")]
+    return files
 
 
 def getModelA():
     return ModelTrainer().loadSavedModel("ModelA.h5")
 
 
+def getModelB():
+    return ModelTrainer().loadSavedModel("ModelB.h5")
+
+
 def resizeAndSplitData():
     inPathRoot = "data/GTSRB/Final_Training/Images/"
     outPathRoot = "data/processed/resized/jpg/"
 
-    # Uncomment to resize and split images
     util.batchResizeAndSplit(inPathRoot, outPathRoot, (80, 20))
 
 
 def doGenAttack(imgArr, targetLabel, trainedModel):
-    genAttack(imgArr, targetLabel, 0.012, 20, 30, trainedModel)
+    genAttack(imgArr, targetLabel, 0.012, 20, 300, trainedModel)
 
 
 if __name__ == '__main__':
-    """
-    Loading a saved model  and predicting an  image from the test data 
-    """
-
+    # resizeAndSplitData()
     model = getModelA()
-    # Image path needs to change on specific computers as train and test are random
-    toPredict = util.readImageForPrediction("genattack/Adversarial_32_00003_00009_1.jpg")
-    res = model.predict(toPredict)
-    print(util.getPredictedLabel(util.predictedLabelToMap(res)))
-
-    """
-    Basic perturbation off changing brightness of image to miss classify the image
-    """
-    # Image path needs to change on specific computers as train and test are random
-
-    # edit = ImageEnhance.Brightness(newImg)
-    # edited = edit.enhance(0.00)
-    # edited.show()
-    # edited.save("Test.jpg")
-    # toPredict = util.readImageForPrediction("data/processed/resized/test/00040/00002_00016.jpg")
-    # res = savedModel.predict(toPredict)
-    # print(util.getPredictedLabel(util.predictedLabelToMap(res)))
+    files = getAllTestFiles("data/processed/resized/test/")
+    for i in range(4):
+        file = random.choice(files)
+        toPredict = util.readImageForPrediction(file)
+        # doGenAttack(toPredict,"0002",model)
+        minPert, res = bruteForceAttack(toPredict, model)
+        label = file.split("/")[-2]
+        saveFileName = "bruteForce_" + str(minPert) + "_" + label + "_" + file.split("/")[-1]
+        img = util.arrayToImage(res[0])
+        img.save(saveFileName)
+        # print(util.getPredictedLabel(util.predictedLabelToMap(model.predict(res))))

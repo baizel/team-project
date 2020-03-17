@@ -4,7 +4,7 @@ import numpy as np
 from tensorflow.python.keras.engine.training import Model  # for type hinting
 
 from classifier import util
-from classifier.models import BasicTensorFlowModel
+from classifier.models import ModelTrainer
 
 
 def creatCircularMask(h, w, center=None, radius=None):
@@ -21,7 +21,7 @@ def creatCircularMask(h, w, center=None, radius=None):
 
 
 def geMutation(x, maxDelta, radius):
-    return createAdversarialExample(x, maxDelta * -1, maxDelta,radius)
+    return createAdversarialExample(x, maxDelta * -1, maxDelta, radius)
 
 
 def crossover(p1, p1Score, p2, p2Score):
@@ -50,7 +50,7 @@ def getFitness(xAdv, model, targetIndex):
     return score
 
 
-def createAdversarialExample(xOriginal, minDelta, maxDelta,radius):
+def createAdversarialExample(xOriginal, minDelta, maxDelta, radius):
     reshaped = xOriginal  # xOriginal.reshape((1, 3, 40, 40))
     for i in range(3):
         values = np.random.uniform(low=minDelta, high=maxDelta, size=(40, 40))
@@ -70,6 +70,8 @@ def attack(x, targetLabel: str, mutationRate, populationSize, numberOfGeneration
         for j in range(populationSize):
             allFitness[j] = getFitness(population[j], model, targetLabel)
         xAdv = population[int(np.argmax(allFitness))]
+        # img = util.arrayToImage(xAdv[0])
+
         prediction = util.getPredictedLabel(util.predictedLabelToMap(model.predict(xAdv)))
         print("Prediction for Generation {} is {}".format(generation, prediction))
         if prediction == targetLabel:
@@ -82,8 +84,7 @@ def attack(x, targetLabel: str, mutationRate, populationSize, numberOfGeneration
             parent1Index = np.random.choice(allIndex, p=probs)
             parent2Index = np.random.choice(allIndex, p=probs)
             child = crossover(population[parent1Index], allFitness[parent1Index], population[parent2Index], allFitness[parent2Index])
-            # TODO: mutate and clip child
-            population[j] = geMutation(child, mutationRate,generation%40)
+            population[j] = geMutation(child, mutationRate, generation % 40)
     print("No examples found, increase generation size")
     return population[0]
 
@@ -94,11 +95,16 @@ def softMax(x: List[int]):
 
 
 if __name__ == '__main__':
-    toPredict = util.readImageForPrediction("../data/processed/resized/test/00032/00003_00009.jpg")
+    toPredict = util.readImageForPrediction("../data/processed/resized/test/00004/00012_00025.jpg")
 
-    model = BasicTensorFlowModel().loadSavedModel("../AnotherOne")
-    a = attack(toPredict, "00001", 0.022, 25, 300, model)
+    model = ModelTrainer().loadSavedModel("../ModelA.h5")
+    a = attack(toPredict, "00001", 0.022, 25, 3000, model)
 
     img = util.arrayToImage(a[0])
     img.show()
-    img.save("Adversarial_32_00003_00009_1.jpg")
+    img.save("Adversarial_4_00012_00025_32_tet.jpg")
+    # imgs = []
+    # for i in range(43):
+    #     img = Image.open("gif/" + str(i) + ".jpg")
+    #     imgs.append(img)
+    # imgs[0].save("test1.gif", save_all=True, append_images=imgs[1:], optimize=True, duration=500, loop=0)
