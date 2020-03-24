@@ -43,11 +43,11 @@ if __name__ == '__main__':
     #resizeAndSplitData()
     pretrained_model = getModelA()
     #choose a speficied image
-    image = mpimg.imread('data/processed/resized/jpgtest/00000/00000_00001.jpg')
+    image = util.readImageForPrediction('data/processed/resized/jpgtest/00000/00000_00001.jpg')
     image_probs = pretrained_model.predict(image)
     print (image.shape)
     plt.figure()
-    plt.imshow(image)
+    plt.imshow(image[0])
     plt.show()
     eps, adv_x = fgsmAttack(image,pretrained_model)
 
