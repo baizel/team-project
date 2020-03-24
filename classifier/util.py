@@ -25,6 +25,8 @@ def getAllTestFiles(rootDir):
 
 
 def arrayToImage(arr, showImage=False):
+    if len(arr.shape) == 4:
+        arr = arr[0]
     img = Image.fromarray(np.uint8(arr * 255))
     if showImage:
         img.show()

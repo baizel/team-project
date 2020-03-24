@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = "3"
 import argparse
 import random
 
@@ -13,13 +16,14 @@ Script to be run from an interactive terminal
 
 def doGenAttack(imgArr, targetLabel, trainedModel, verbose=False):
     adv = genAttack(imgArr, targetLabel, mutationRate=0.3, noiseLevel=0.012, populationSize=20, numberOfGenerations=300, model=trainedModel)
-    util.arrayToImage(adv[0], verbose)
+    util.arrayToImage(adv.image, verbose)
+    print("Attack with minimum perturbation: {}, is successful Attack: {}".format(adv.getPerturbation(), adv.isAttackSuccess))
 
 
 def doBruteForceAttack(imgArr, model, verbose=False):
-    util.arrayToImage(imgArr[0], verbose)
+    util.arrayToImage(imgArr, verbose)
     pert, pertImgArr = bruteForceAttack(imgArr, model)
-    util.arrayToImage(pertImgArr[0], verbose)
+    util.arrayToImage(pertImgArr, verbose)
     util.getPredictedLabel(util.predictedLabelToMap(model.predict(imgArr)))
     print("Attack successful, Minimum perturbation:{}. Attacked classification {} ".format(pert, util.getPredictedLabel(util.predictedLabelToMap(model.predict(imgArr)))))
 

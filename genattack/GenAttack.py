@@ -7,6 +7,16 @@ from classifier import util
 from classifier.models import ModelTrainer
 
 
+class Member:
+    def __init__(self, image, appliedMask):
+        self.image = image
+        self.appliedMask = appliedMask
+        self.isAttackSuccess = False
+
+    def getPerturbation(self):
+        return np.sum(self.appliedMask)
+
+
 def creatCircularMask(h, w, center=None, radius=None):
     """
     Creates a a true/false array where the true values form a circle from the center position with a given radius
@@ -37,18 +47,20 @@ def creatCircularMask(h, w, center=None, radius=None):
     return mask
 
 
-def geMutation(x, maxDelta, radius):
+def geMutation(x: Member, maxDelta, radius):
     """
-    Mutates a given image array
+    Mutates a given member
     :param x: Image as an array with shape of (x,x,3)
     :param maxDelta: maximum change to any given pixel value
     :param radius: radius of mask that is applied on the image
-    :return: a mutated image with more noise added
+    :return: a mutated image with more noise added returns a member
     """
-    return createAdversarialExample(x, maxDelta * -1, maxDelta, radius)
+    newMember = createAdversarialExample(x.image, maxDelta * -1, maxDelta, radius)
+    newMask = x.appliedMask + newMember.appliedMask
+    return Member(newMember.image, newMask)
 
 
-def crossover(p1, p1Score, p2, p2Score):
+def crossover(p1: Member, p1Score, p2: Member, p2Score):
     """
     Function to make a child image from two images.
     Works by choosing one pixel from either parent depending on their probability
@@ -61,26 +73,28 @@ def crossover(p1, p1Score, p2, p2Score):
     probs = p1Score / (p1Score + p2Score)
     p = [probs, 1 - probs]
     pool = [p1, p2]
-    ret = np.zeros((1, 40, 40, 3))
+    retImage = np.zeros((1, 40, 40, 3))
+    retMask = np.zeros((40, 40, 3))
     for i in range(3):
         for r in range(40):
             for c in range(40):
                 index = np.random.choice([0, 1], p=p)
                 feature = pool[index]
-                ret[0][r][c][i] = feature[0][r][c][i]
-    return ret
+                retImage[0][r][c][i] = feature.image[0][r][c][i]
+                retMask[r][c][i] = feature.appliedMask[r][c][i]
+    return Member(retImage, retMask)
 
 
-def getFitness(xAdv, model, targetIndex):
+def getFitness(member: Member, model, targetIndex):
     """
     Returns the fitness of the image. Currently it is just the score of
     the target label given by the trained model.
-    :param xAdv: The image that is to be tested
+    :param member: The member object that is to be tested
     :param model: The trained model that can be used to predict the given image
     :param targetIndex: The target label for the attack
     :return: float, a score of fitness
     """
-    predict = model.predict(xAdv)
+    predict = model.predict(member.image)
     # print(predict)
     indx = int(targetIndex)
     score = predict[0][indx]
@@ -101,15 +115,17 @@ def createAdversarialExample(xOriginal, minDelta, maxDelta, radius):
     :param minDelta:  min amount of noise
     :param maxDelta: max amount of noise
     :param radius: radius of the circle for the mask
-    :return: Same as xOriginal but with more noise
+    :return: A member object with modified image and a perturbation level
     """
     reshaped = xOriginal  # xOriginal.reshape((1, 3, 40, 40))
+    pert = np.zeros((40, 40, 3))
     for i in range(3):
         values = np.random.uniform(low=minDelta, high=maxDelta, size=(40, 40))
         mask = creatCircularMask(40, 40, radius=radius)
         values[~mask] = 0
+        pert[:, :, i] = np.abs(values)
         reshaped[0][:, :, i] = values + reshaped[0][:, :, i]
-    return reshaped
+    return Member(reshaped, pert)
 
 
 def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, numberOfGenerations, model: Model):
@@ -135,14 +151,15 @@ def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, number
         allFitness = [None] * populationSize
         for j in range(populationSize):
             allFitness[j] = getFitness(population[j], model, targetLabel)
-        xAdv = population[int(np.argmax(allFitness))]
+        xAdvMember: Member = population[int(np.argmax(allFitness))]
 
-        prediction = util.getPredictedLabel(util.predictedLabelToMap(model.predict(xAdv)))
+        prediction = util.getPredictedLabel(util.predictedLabelToMap(model.predict(xAdvMember.image)))
         print("Prediction for Generation {} is {}".format(generation, prediction))
         if prediction == targetLabel:
+            xAdvMember.isAttackSuccess = True
             print("Found example in {} generations".format(generation))
-            return xAdv
-        population[0] = xAdv
+            return xAdvMember
+        population[0] = xAdvMember
         probs = softMax(allFitness)
         for j in range(1, populationSize):
             allIndex = np.arange(populationSize)
@@ -170,9 +187,9 @@ if __name__ == '__main__':
 
     # a = attack(toPredict, "00001", 0.022, 25, 3000, model)
 
-    img = util.arrayToImage(a[0])
+    img = util.arrayToImage(a.image)
     img.show()
-    img.save("Adversarial_4_00012_00025_32_tet.jpg")
+    # img.save("Adversarial_4_00012_00025_32_tet.jpg")
     # imgs = []
     # for i in range(43):
     #     img = Image.open("gif/" + str(i) + ".jpg")

@@ -5,6 +5,13 @@ from classifier import util
 
 
 def attack(imgArr, model, granularity=100):
+    """
+    Brute force attack, Gradually adds noise to an image until its misclassified
+    :param imgArr: The image as an numpy array
+    :param model: The model to attack
+    :param granularity: the factor to reduce the noise level as the default noise level is between 0 and 1
+    :return:
+    """
     assert granularity != 0, "granularity cannot be zero"
     assert imgArr.shape == (1, 40, 40, 3), "Expected shape of image array (1,40,40,3)"
     totalPerturbation = 0

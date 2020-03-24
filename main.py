@@ -21,6 +21,9 @@ def getAllTestFiles(rootDir):
 
 
 def getModelA():
+    m = ModelTrainer()
+    m.loadSavedModel("ModelA.h5")
+    m.summary()
     return ModelTrainer().loadSavedModel("ModelA.h5")
 
 
@@ -36,7 +39,7 @@ def resizeAndSplitData():
 
 
 def doGenAttack(imgArr, targetLabel, trainedModel):
-    genAttack(imgArr, targetLabel, 0.012, 20, 300, trainedModel)
+    genAttack(imgArr, targetLabel, mutationRate=0.3, noiseLevel=0.012, populationSize=20, numberOfGenerations=300, model=trainedModel)
 
 def fgsm_preprocess(image):
     image = tf.cast(image, tf.float32)
@@ -46,41 +49,39 @@ def fgsm_preprocess(image):
     return image
 
 if __name__ == '__main__':
-    #resizeAndSplitData()
+    # resizeAndSplitData()
     pretrained_model = getModelA()
-    #print(type(pretrained_model))
+    # print(type(pretrained_model))
 
     mpl.rcParams['figure.figsize'] = (8, 8)
     mpl.rcParams['axes.grid'] = False
-    #choose a speficied image
-    #image0 = mpimg.imread('data/processed/resized/jpgtest/00000/00000_00001.jpg')
+    # choose a speficied image
+    # image0 = mpimg.imread('data/processed/resized/jpgtest/00000/00000_00001.jpg')
     image_raw = tf.io.read_file('data/processed/resized/jpgtest/00000/00000_00001.jpg')
     image = tf.image.decode_image(image_raw)
     image = fgsm_preprocess(image)
     image_probs = pretrained_model.predict(image)
 
-    #image = util.readImageForPrediction('data/processed/resized/jpgtest/00000/00000_00001.jpg')
-    #image_probs = pretrained_model.predict(image)
-    #image2 = tf.image.decode_image(image)
-    #image2_probs = pretrained_model.predict(image2)
-    #print(type(image_raw), image_raw.shape)
-    print(type(image),image.shape)
+    # image = util.readImageForPrediction('data/processed/resized/jpgtest/00000/00000_00001.jpg')
+    # image_probs = pretrained_model.predict(image)
+    # image2 = tf.image.decode_image(image)
+    # image2_probs = pretrained_model.predict(image2)
+    # print(type(image_raw), image_raw.shape)
+    print(type(image), image.shape)
     plt.figure()
     plt.imshow(image[0])
     plt.show()
     eps, adv_x = fgsmAttack(image, pretrained_model)
-
-    #resizeAndSplitData()
-    #model = getModelA()
-    #print(type(model))
-    #files = getAllTestFiles("data/processed/resized/jpgtest/")
-    #for i in range(4):
-        #file = random.choice(files)
-        #toPredict = util.readImageForPrediction(file)
-        #doGenAttack(toPredict,"0002",model)
-        #minPert, res = bruteForceAttack(toPredict, model)
-        #label = file.split("/")[-2]
-        #saveFileName = "bruteForce_" + str(minPert) + "_" + label + "_" + file.split("/")[-1]
-        #img = util.arrayToImage(res[0])
-        #img.save(saveFileName)
-        #print(util.getPredictedLabel(util.predictedLabelToMap(model.predict(res))))
+    # resizeAndSplitData()
+    model = getModelA()
+    files = util.getAllTestFiles("data/processed/resized/test/")
+    for i in range(4):
+        file = random.choice(files)
+        toPredict = util.readImageForPrediction(file)
+        # doGenAttack(toPredict,"0002",model)
+        minPert, res = bruteForceAttack(toPredict, model)
+        label = file.split("/")[-2]
+        saveFileName = "bruteForce_" + str(minPert) + "_" + label + "_" + file.split("/")[-1]
+        img = util.arrayToImage(res[0])
+        img.save(saveFileName)
+        # print(util.getPredictedLabel(util.predictedLabelToMap(model.predict(res))))
