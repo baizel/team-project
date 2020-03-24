@@ -7,14 +7,6 @@ from bruteforce.BruteForce import attack as bruteForceAttack
 import classifier.util as util
 
 
-def getAllTestFiles(rootDir):
-    files = [os.path.join(path, filename)
-             for path, dirs, files in os.walk(rootDir)
-             for filename in files
-             if filename.endswith(".jpg")]
-    return files
-
-
 def getModelA():
     return ModelTrainer().loadSavedModel("ModelA.h5")
 
@@ -31,13 +23,13 @@ def resizeAndSplitData():
 
 
 def doGenAttack(imgArr, targetLabel, trainedModel):
-    genAttack(imgArr, targetLabel, 0.012, 20, 300, trainedModel)
+    genAttack(imgArr, targetLabel, mutationRate=0.3, noiseLevel=0.012, populationSize=20, numberOfGenerations=300, model=trainedModel)
 
 
 if __name__ == '__main__':
     # resizeAndSplitData()
     model = getModelA()
-    files = getAllTestFiles("data/processed/resized/test/")
+    files = util.getAllTestFiles("data/processed/resized/test/")
     for i in range(4):
         file = random.choice(files)
         toPredict = util.readImageForPrediction(file)

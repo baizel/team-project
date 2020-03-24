@@ -8,6 +8,23 @@ from classifier.models import ModelTrainer
 
 
 def creatCircularMask(h, w, center=None, radius=None):
+    """
+    Creates a a true/false array where the true values form a circle from the center position with a given radius
+    eg out put of creatCircularMask(5,5,radius=2)
+       [
+       [F,F,T,F,F],
+       [F,T,T,T,F],
+       [T,T,T,T,T],
+       [F,T,T,T,F],
+       [F,F,T,F,F]
+       ]
+
+    :param h: height
+    :param w: width
+    :param center: center position of the circular mask
+    :param radius: radius if the circle
+    :return: an array of true/false value
+    """
     if center is None:  # use the middle of the image
         center = (int(w / 2), int(h / 2))
     if radius is None:  # use the smallest distance between the center and image walls
@@ -21,10 +38,26 @@ def creatCircularMask(h, w, center=None, radius=None):
 
 
 def geMutation(x, maxDelta, radius):
+    """
+    Mutates a given image array
+    :param x: Image as an array with shape of (x,x,3)
+    :param maxDelta: maximum change to any given pixel value
+    :param radius: radius of mask that is applied on the image
+    :return: a mutated image with more noise added
+    """
     return createAdversarialExample(x, maxDelta * -1, maxDelta, radius)
 
 
 def crossover(p1, p1Score, p2, p2Score):
+    """
+    Function to make a child image from two images.
+    Works by choosing one pixel from either parent depending on their probability
+    :param p1:
+    :param p1Score:
+    :param p2:
+    :param p2Score:
+    :return:
+    """
     probs = p1Score / (p1Score + p2Score)
     p = [probs, 1 - probs]
     pool = [p1, p2]
@@ -39,6 +72,14 @@ def crossover(p1, p1Score, p2, p2Score):
 
 
 def getFitness(xAdv, model, targetIndex):
+    """
+    Returns the fitness of the image. Currently it is just the score of
+    the target label given by the trained model.
+    :param xAdv: The image that is to be tested
+    :param model: The trained model that can be used to predict the given image
+    :param targetIndex: The target label for the attack
+    :return: float, a score of fitness
+    """
     predict = model.predict(xAdv)
     # print(predict)
     indx = int(targetIndex)
@@ -51,6 +92,17 @@ def getFitness(xAdv, model, targetIndex):
 
 
 def createAdversarialExample(xOriginal, minDelta, maxDelta, radius):
+    """
+    Adds noise to a given image. The noise is random and applied
+    in a circular mask with size of radius. The circle mask center will be the
+    center of the image (h/2,w/2) or (20,20) for 40x40 image. The noise is just random
+    values added to each pixel value
+    :param xOriginal: The image to be edited
+    :param minDelta:  min amount of noise
+    :param maxDelta: max amount of noise
+    :param radius: radius of the circle for the mask
+    :return: Same as xOriginal but with more noise
+    """
     reshaped = xOriginal  # xOriginal.reshape((1, 3, 40, 40))
     for i in range(3):
         values = np.random.uniform(low=minDelta, high=maxDelta, size=(40, 40))
@@ -60,17 +112,30 @@ def createAdversarialExample(xOriginal, minDelta, maxDelta, radius):
     return reshaped
 
 
-def attack(x, targetLabel: str, mutationRate, populationSize, numberOfGenerations, model: Model):
+def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, numberOfGenerations, model: Model):
+    """
+    Gen Attack to attack an image to find an example that misclassifies the original image as the target .
+    :param x: The original Image
+    :param targetLabel: The target label to find
+    :param noiseLevel: The median noise Level to add to an image
+    :param mutationRate: the probability to cause a mutation rate
+    :param populationSize: the population of images per generations
+    :param numberOfGenerations: the umber of generations to find the example
+    :param model: the model to attack
+    :return: an image, either one that was successful or the one closest to being successful at the end of the generation
+    """
+    prediction = util.getPredictedLabel(util.predictedLabelToMap(model.predict(x)))
+    if prediction == targetLabel:
+        raise AssertionError("Given image predicted same as target label")
     population = [None] * populationSize
     for i in range(populationSize):
-        population[i] = createAdversarialExample(x, -1 * mutationRate, mutationRate, 3)
+        population[i] = createAdversarialExample(x, -1 * noiseLevel, noiseLevel, 3)
 
     for generation in range(numberOfGenerations):
         allFitness = [None] * populationSize
         for j in range(populationSize):
             allFitness[j] = getFitness(population[j], model, targetLabel)
         xAdv = population[int(np.argmax(allFitness))]
-        # img = util.arrayToImage(xAdv[0])
 
         prediction = util.getPredictedLabel(util.predictedLabelToMap(model.predict(xAdv)))
         print("Prediction for Generation {} is {}".format(generation, prediction))
@@ -84,8 +149,11 @@ def attack(x, targetLabel: str, mutationRate, populationSize, numberOfGeneration
             parent1Index = np.random.choice(allIndex, p=probs)
             parent2Index = np.random.choice(allIndex, p=probs)
             child = crossover(population[parent1Index], allFitness[parent1Index], population[parent2Index], allFitness[parent2Index])
-            population[j] = geMutation(child, mutationRate, generation % 40)
-    print("No examples found, increase generation size")
+            mutated = child
+            if np.random.choice([True, False], p=[mutationRate, 1 - mutationRate]):
+                mutated = geMutation(child, noiseLevel, generation % 40)
+            population[j] = mutated
+    print("No examples found, with GenAttack")
     return population[0]
 
 
@@ -98,7 +166,9 @@ if __name__ == '__main__':
     toPredict = util.readImageForPrediction("../data/processed/resized/test/00004/00012_00025.jpg")
 
     model = ModelTrainer().loadSavedModel("../ModelA.h5")
-    a = attack(toPredict, "00001", 0.022, 25, 3000, model)
+    a = attack(toPredict, "00001", mutationRate=0.8, noiseLevel=0.012, populationSize=20, numberOfGenerations=300, model=model)
+
+    # a = attack(toPredict, "00001", 0.022, 25, 3000, model)
 
     img = util.arrayToImage(a[0])
     img.show()

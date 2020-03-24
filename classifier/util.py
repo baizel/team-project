@@ -16,6 +16,14 @@ AUTOTUNE = tf.data.experimental.AUTOTUNE
 CLASS_NAMES = np.array(["{:05d}".format(x) for x in range(0, 43)])
 
 
+def getAllTestFiles(rootDir):
+    files = [os.path.join(path, filename)
+             for path, dirs, files in os.walk(rootDir)
+             for filename in files
+             if filename.endswith(".jpg")]
+    return files
+
+
 def arrayToImage(arr, showImage=False):
     img = Image.fromarray(np.uint8(arr * 255))
     if showImage:
