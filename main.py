@@ -84,7 +84,6 @@ def __fgsm_preprocess(image):
 if __name__ == '__main__':
     # resizeAndSplitData()
     model = getModelA()
-    image = util.readImageForPrediction("data/processed/resized/test/00033/00000_00011.jpg")
 
     files = util.getAllTestFiles("data/processed/resized/test/")
     attacks = {
