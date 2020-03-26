@@ -13,6 +13,13 @@ from fgsm.FGSM import fgsm_attack as fgsmAttack
 import classifier.util as util
 
 
+class AttackReturn:
+    def __init__(self, attackedImage, minPert, wasSuccessFull):
+        self.attackedImage = attackedImage
+        self.minPert = minPert
+        self.wasSuccessFull = wasSuccessFull
+
+
 def getAllTestFiles(rootDir):
     files = [os.path.join(path, filename)
              for path, dirs, files in os.walk(rootDir)
@@ -38,15 +45,21 @@ def resizeAndSplitData():
     util.batchResizeAndSplit(inPathRoot, outPathRoot, (80, 20))
 
 
+def doBruteForce(imgArr, model):
+    minPert, res = bruteForceAttack(imgArr, model)
+    return AttackReturn(res, minPert, True)
+
+
 def doGenAttack(imgArr, targetLabel, trainedModel):
     m = genAttack(imgArr, targetLabel, mutationRate=0.3, noiseLevel=0.012, populationSize=20, numberOfGenerations=300, model=trainedModel)
-    return m
+    return AttackReturn(m.image, m.getPerturbation(), m.isAttackSuccess)
 
 
 def doFSGMAttack(imgArr, model):
     image = __fgsm_preprocess(imgArr[0])
-    eps, adv_x,isFound = fgsmAttack(image, model)
-    return adv_x,isFound
+    eps, adv_x, isFound = fgsmAttack(image, model)
+    return adv_x, isFound
+
 
 def __fgsm_preprocess(image):
     image = tf.cast(image, tf.float64)
@@ -64,11 +77,11 @@ if __name__ == '__main__':
         file = random.choice(files)
         toPredict = util.readImageForPrediction(file)
         # mem = doGenAttack(toPredict,"0002",model)
-        res,isFound = doFSGMAttack(toPredict,model)
-        print("Did FGSM find an example: ",isFound)
+        res, isFound = doFSGMAttack(toPredict, model)
+        print("Did FGSM find an example: ", isFound)
         # minPert, res = bruteForceAttack(toPredict, model)
         label = file.split("/")[-2]
         # saveFileName = "bruteForce_" + str(minPert) + "_" + label + "_" + file.split("/")[-1]
-        img = util.arrayToImage(res[0],True)
+        img = util.arrayToImage(res[0], True)
         # img.save(saveFileName)
         # print(util.getPredictedLabel(util.predictedLabelToMap(model.predict(res))))

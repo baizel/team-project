@@ -3,6 +3,7 @@ import tensorflow as tf
 from classifier import util
 import matplotlib.pyplot as plt
 from tensorflow.python.keras.engine.training import Model
+import numpy as np
 
 loss_object = tf.keras.losses.CategoricalCrossentropy()
 
@@ -37,14 +38,14 @@ def create_perturbations(input_image, model: Model, isVerbose=False, useMatplotL
     return perturbations
 
 
-def fgsm_attack(input_image, model: Model, isVerbose=False, useMatplotLib=False, maxIter=10000):
+def fgsm_attack(input_image, model: Model, isVerbose=False, useMatplotLib=False, maxIter=100000):
     epsilon = 0
     iterCount = 0
     initPrediction = int(util.getPredictedLabel(util.predictedLabelToMap(model.predict(input_image))))
     prediction = initPrediction
     perturbations = create_perturbations(input_image, model, isVerbose, useMatplotLib)
     adv_x = input_image
-    while prediction == initPrediction and maxIter < iterCount:
+    while prediction == initPrediction and maxIter > iterCount:
         if isVerbose:
             print('Now epsilon is ', epsilon)
             print('Now iterCount is ', iterCount)
@@ -58,4 +59,4 @@ def fgsm_attack(input_image, model: Model, isVerbose=False, useMatplotLib=False,
         iterCount = iterCount + 1
         epsilon = 0.1 * iterCount  # change the value(increase 0.01) to make the different obvious
 
-    return epsilon, adv_x, prediction == initPrediction
+    return epsilon, adv_x, prediction != initPrediction
