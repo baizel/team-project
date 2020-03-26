@@ -18,7 +18,6 @@ def attack(imgArr, model, granularity=100):
     iterCount = 0
     initPrediction = int(util.getPredictedLabel(util.predictedLabelToMap(model.predict(imgArr))))
     prediction = initPrediction
-    start = time.time()
     while prediction == initPrediction:
         iterCount = iterCount + 1
         for channel in range(3):
@@ -30,6 +29,4 @@ def attack(imgArr, model, granularity=100):
                     pixelVal = pixelVal + randVal
                     imgArr[0][r][c][channel] = pixelVal
         prediction = int(util.getPredictedLabel(util.predictedLabelToMap(model.predict(imgArr))))
-    end = time.time()
-    print(totalPerturbation, " time=", end - start,"Misclassified label=",prediction)
     return totalPerturbation,imgArr

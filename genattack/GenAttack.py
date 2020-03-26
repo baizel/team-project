@@ -128,7 +128,7 @@ def createAdversarialExample(xOriginal, minDelta, maxDelta, radius):
     return Member(reshaped, pert)
 
 
-def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, numberOfGenerations, model: Model) -> Member:
+def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, numberOfGenerations, model: Model, isVerbose = False) -> Member:
     """
     Gen Attack to attack an image to find an example that misclassifies the original image as the target .
     :param x: The original Image
@@ -154,10 +154,10 @@ def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, number
         xAdvMember: Member = population[int(np.argmax(allFitness))]
 
         prediction = util.getPredictedLabel(util.predictedLabelToMap(model.predict(xAdvMember.image)))
-        print("Prediction for Generation {} is {}".format(generation, prediction))
+        print("Prediction for Generation {} is {}".format(generation, prediction)) if isVerbose else None
         if prediction == targetLabel:
             xAdvMember.isAttackSuccess = True
-            print("Found example in {} generations".format(generation))
+            print("Found example in {} generations".format(generation)) if isVerbose else None
             return xAdvMember
         population[0] = xAdvMember
         probs = softMax(allFitness)
@@ -170,7 +170,7 @@ def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, number
             if np.random.choice([True, False], p=[mutationRate, 1 - mutationRate]):
                 mutated = geMutation(child, noiseLevel, generation % 40)
             population[j] = mutated
-    print("No examples found, with GenAttack")
+    print("No examples found, with GenAttack") if isVerbose else None
     return population[0]
 
 
