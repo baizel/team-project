@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 from classifier import util
+import matplotlib.pyplot as plt
 from tensorflow.python.keras.engine.training import Model
 
 loss_object = tf.keras.losses.CategoricalCrossentropy()
@@ -35,16 +36,16 @@ def fgsm_attack (input_image, model:Model):
     iterCount = 0
     initPrediction = int(util.getPredictedLabel(util.predictedLabelToMap(model.predict(input_image))))
     prediction = initPrediction
-    perturbations = create_adversarial_pattern(input_image,model)
+    perturbations = create_perturbations(input_image,model)
     while prediction == initPrediction:
         print('Now epsilon is ', epsilon)
         print('Now iterCount is ', iterCount)
         adv_x = input_image + epsilon*perturbations
         adv_x = tf.clip_by_value(adv_x, 0, 1)
         plt.figure
-        plt.imshow(adv_x)
+        plt.imshow(adv_x[0])
         plt.show()
         prediction = int(util.getPredictedLabel(util.predictedLabelToMap(model.predict(adv_x))))
         iterCount = iterCount + 1
-        epsilon = 0.01*iterCount
+        epsilon = 0.1*iterCount #change the value(increase 0.01) to make the different obvious
     return epsilon, adv_x

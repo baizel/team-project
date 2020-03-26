@@ -38,21 +38,41 @@ def resizeAndSplitData():
 def doGenAttack(imgArr, targetLabel, trainedModel):
     genAttack(imgArr, targetLabel, 0.012, 20, 300, trainedModel)
 
+def fgsm_preprocess(image):
+    image = tf.cast(image, tf.float32)
+    image = image/255
+    image = tf.image.resize(image, (40, 40))
+    image = image[None, ...]
+    return image
 
 if __name__ == '__main__':
     #resizeAndSplitData()
     pretrained_model = getModelA()
+    #print(type(pretrained_model))
+
+    mpl.rcParams['figure.figsize'] = (8, 8)
+    mpl.rcParams['axes.grid'] = False
     #choose a speficied image
-    image = mpimg.imread('data/processed/resized/jpgtest/00000/00000_00001.jpg')
+    #image0 = mpimg.imread('data/processed/resized/jpgtest/00000/00000_00001.jpg')
+    image_raw = tf.io.read_file('data/processed/resized/jpgtest/00000/00000_00001.jpg')
+    image = tf.image.decode_image(image_raw)
+    image = fgsm_preprocess(image)
     image_probs = pretrained_model.predict(image)
-    print (image.shape)
+
+    #image = util.readImageForPrediction('data/processed/resized/jpgtest/00000/00000_00001.jpg')
+    #image_probs = pretrained_model.predict(image)
+    #image2 = tf.image.decode_image(image)
+    #image2_probs = pretrained_model.predict(image2)
+    #print(type(image_raw), image_raw.shape)
+    print(type(image),image.shape)
     plt.figure()
-    plt.imshow(image)
+    plt.imshow(image[0])
     plt.show()
-    eps, adv_x = fgsmAttack(image,pretrained_model)
+    eps, adv_x = fgsmAttack(image, pretrained_model)
 
     #resizeAndSplitData()
     #model = getModelA()
+    #print(type(model))
     #files = getAllTestFiles("data/processed/resized/jpgtest/")
     #for i in range(4):
         #file = random.choice(files)
