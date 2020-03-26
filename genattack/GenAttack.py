@@ -128,7 +128,7 @@ def createAdversarialExample(xOriginal, minDelta, maxDelta, radius):
     return Member(reshaped, pert)
 
 
-def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, numberOfGenerations, model: Model):
+def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, numberOfGenerations, model: Model) -> Member:
     """
     Gen Attack to attack an image to find an example that misclassifies the original image as the target .
     :param x: The original Image
@@ -138,7 +138,7 @@ def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, number
     :param populationSize: the population of images per generations
     :param numberOfGenerations: the umber of generations to find the example
     :param model: the model to attack
-    :return: an image, either one that was successful or the one closest to being successful at the end of the generation
+    :return: a Member object, either one that was successful or the one closest to being successful at the end of the generation
     """
     prediction = util.getPredictedLabel(util.predictedLabelToMap(model.predict(x)))
     if prediction == targetLabel:
