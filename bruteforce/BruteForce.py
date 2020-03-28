@@ -26,7 +26,7 @@ def attack(imgArr, model, granularity=100):
                     pixelVal = imgArr[0][r][c][channel]
                     randVal = np.random.random(1)[0] / granularity
                     totalPerturbation = totalPerturbation + randVal
-                    pixelVal = pixelVal + randVal
+                    pixelVal = pixelVal + (randVal * np.random.choice([1, -1], p=[0.5, 0.5]))
                     imgArr[0][r][c][channel] = pixelVal
         prediction = int(util.getPredictedLabel(util.predictedLabelToMap(model.predict(imgArr))))
-    return totalPerturbation,imgArr
+    return totalPerturbation, imgArr

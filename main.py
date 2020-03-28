@@ -110,7 +110,7 @@ if __name__ == '__main__':
                   (key, ret.time, ret.minPert, ret.wasSuccessFull, predictedLabel))
             img = util.arrayToImage(ret.attackedImage)
             originalFileName = file.split("/")[-1]
-            # Format : Attack_NAme, perturbed amount, original label, attacked_label, time took to attack, if attack was success, original name
-            saveFileName = "{0}_{1:.2f}_{2}_{3}_{4}_{5:.2f}_{6}".format(key.replace(" ", ""), ret.minPert, label, predictedLabel, ret.wasSuccessFull, ret.time, originalFileName)
-            path = os.path.join("attack_examples", saveFileName)
-            img.save(path)
+            # Format : Attack_NAme, perturbed amount, original label, attacked_label, if attack was success,time took to attack, original name
+            # saveFileName = "{0}_{1:.2f}_{2}_{3}_{4}_{5:.2f}_{6}".format(key.replace(" ", ""), ret.minPert, label, predictedLabel, ret.wasSuccessFull, ret.time, originalFileName)
+            # path = os.path.join("attack_examples", saveFileName)
+            # img.save(path)
