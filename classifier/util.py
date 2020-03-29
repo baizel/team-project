@@ -16,6 +16,14 @@ AUTOTUNE = tf.data.experimental.AUTOTUNE
 CLASS_NAMES = np.array(["{:05d}".format(x) for x in range(0, 43)])
 
 
+class AttackReturn:
+    def __init__(self, attackedImage, minPert, wasSuccessFull):
+        self.attackedImage = attackedImage
+        self.minPert = minPert
+        self.wasSuccessFull = wasSuccessFull
+        self.time = None
+
+
 def getAllTestFiles(rootDir):
     files = [os.path.join(path, filename)
              for path, dirs, files in os.walk(rootDir)

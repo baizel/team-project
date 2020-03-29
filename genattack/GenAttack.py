@@ -131,6 +131,7 @@ def createAdversarialExample(xOriginal, minDelta, maxDelta, radius):
 def attack(x, targetLabel: str, noiseLevel, mutationRate, populationSize, numberOfGenerations, model: Model, isVerbose = False) -> Member:
     """
     Gen Attack to attack an image to find an example that misclassifies the original image as the target .
+    :param isVerbose: Prints output when running the attack
     :param x: The original Image
     :param targetLabel: The target label to find
     :param noiseLevel: The median noise Level to add to an image

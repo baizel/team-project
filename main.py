@@ -9,6 +9,7 @@ from classifier.models import ModelTrainer
 from genattack.GenAttack import attack as genAttack
 from bruteforce.BruteForce import attack as bruteForceAttack
 from fgsm.FGSM import fgsm_attack as fgsmAttack
+from classifier.util import AttackReturn
 import classifier.util as util
 
 
@@ -21,14 +22,6 @@ def timeFunction(attack):
         return attackRet
 
     return timed
-
-
-class AttackReturn:
-    def __init__(self, attackedImage, minPert, wasSuccessFull):
-        self.attackedImage = attackedImage
-        self.minPert = minPert
-        self.wasSuccessFull = wasSuccessFull
-        self.time = None
 
 
 def getAllTestFiles(rootDir):
@@ -57,21 +50,21 @@ def resizeAndSplitData():
 
 
 @timeFunction
-def doBruteForce(imgArr, model):
+def doBruteForce(imgArr, model) -> AttackReturn:
     minPert, res = bruteForceAttack(imgArr, model)
     return AttackReturn(res, minPert, True)
 
 
 @timeFunction
-def doGenAttack(imgArr, model, targetLabel):
-    m = genAttack(imgArr, targetLabel, mutationRate=0.3, noiseLevel=0.12, populationSize=25, numberOfGenerations=300, model=model)
+def doGenAttack(imgArr, model, targetLabel, isVerbose=False) -> AttackReturn:
+    m = genAttack(imgArr, targetLabel, mutationRate=0.7, noiseLevel=0.012, populationSize=25, numberOfGenerations=300, model=model, isVerbose=isVerbose)
     return AttackReturn(m.image, m.getPerturbation(), m.isAttackSuccess)
 
 
 @timeFunction
-def doFSGMAttack(imgArr, model):
+def doFSGMAttack(imgArr, model, isVerbose=False) -> AttackReturn:
     image = __fgsm_preprocess(imgArr[0])
-    totPert, adv_x, isFound = fgsmAttack(image, model)
+    totPert, adv_x, isFound = fgsmAttack(image, model, isVerbose=isVerbose)
     return AttackReturn(adv_x, totPert, isFound)
 
 
@@ -111,6 +104,6 @@ if __name__ == '__main__':
             img = util.arrayToImage(ret.attackedImage)
             originalFileName = file.split("/")[-1]
             # Format : Attack_NAme, perturbed amount, original label, attacked_label, if attack was success,time took to attack, original name
-            # saveFileName = "{0}_{1:.2f}_{2}_{3}_{4}_{5:.2f}_{6}".format(key.replace(" ", ""), ret.minPert, label, predictedLabel, ret.wasSuccessFull, ret.time, originalFileName)
-            # path = os.path.join("attack_examples", saveFileName)
-            # img.save(path)
+            saveFileName = "{0}_{1:.2f}_{2}_{3}_{4}_{5:.2f}_{6}".format(key.replace(" ", ""), ret.minPert, label, predictedLabel, ret.wasSuccessFull, ret.time, originalFileName)
+            path = os.path.join("attack_examples", saveFileName)
+            img.save(path)

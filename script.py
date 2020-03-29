@@ -5,31 +5,42 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = "3"
 import argparse
 import random
 
+from classifier.util import AttackReturn
 from classifier import util
 from genattack.GenAttack import attack as genAttack
 from bruteforce.BruteForce import attack as bruteForceAttack
+import main
 
 """
 Script to be run from an interactive terminal
 """
 
 
+def printSummary(attackName, attackReturn: AttackReturn, trainedModel):
+    outLabel = util.getPredictedLabel(util.predictedLabelToMap(trainedModel.predict(attackReturn.attackedImage)))
+    print("{} Attack Summary".format(attackName))
+    print("Was Attack Successful {}".format(attackReturn.wasSuccessFull))
+    print("Time Took: {:.2f}s".format(attackReturn.time))
+    print("Minimum Perturbation: {:.2f}".format(attackReturn.minPert))
+    print("Output Label after Attack: {}".format(outLabel))
+
+
 def doGenAttack(imgArr, targetLabel, trainedModel, verbose=False):
-    adv = genAttack(imgArr, targetLabel, mutationRate=0.3, noiseLevel=0.012, populationSize=20, numberOfGenerations=300, model=trainedModel)
-    util.arrayToImage(adv.image, verbose)
-    print("Attack with minimum perturbation: {}, is successful Attack: {}".format(adv.getPerturbation(), adv.isAttackSuccess))
+    ret = main.doGenAttack(imgArr, trainedModel, targetLabel,verbose)
+    util.arrayToImage(ret.attackedImage, verbose)
+    printSummary("GenAttack", ret, trainedModel)
 
 
-def doBruteForceAttack(imgArr, model, verbose=False):
-    util.arrayToImage(imgArr, verbose)
-    pert, pertImgArr = bruteForceAttack(imgArr, model)
-    util.arrayToImage(pertImgArr, verbose)
-    util.getPredictedLabel(util.predictedLabelToMap(model.predict(imgArr)))
-    print("Attack successful, Minimum perturbation:{}. Attacked classification {} ".format(pert, util.getPredictedLabel(util.predictedLabelToMap(model.predict(imgArr)))))
+def doBruteForceAttack(imgArr, trainedModel, verbose=False):
+    ret = main.doBruteForce(imgArr, trainedModel)
+    util.arrayToImage(ret.attackedImage, verbose)
+    printSummary("Brute Force", ret, trainedModel)
 
 
-def doFGSMAttack():
-    raise NotImplementedError("FGSM not yet implemented")
+def doFGSMAttack(imgArr, trainedModel, verbose=False):
+    ret = main.doFSGMAttack(imgArr, trainedModel,verbose)
+    util.arrayToImage(ret.attackedImage, verbose)
+    printSummary("FGSM", ret, trainedModel)
 
 
 if __name__ == '__main__':
@@ -80,4 +91,4 @@ if __name__ == '__main__':
             print("Attacking Image {} with BruteForce".format(imgPath))
             doBruteForceAttack(imgArr, model, args.isVerbose)
         elif args.fgsm:
-            doFGSMAttack()
+            doFGSMAttack(imgArr, model, args.isVerbose)
