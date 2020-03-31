@@ -19,7 +19,7 @@ Script to be run from an interactive terminal
 def printSummary(attackName, attackReturn: AttackReturn, trainedModel):
     outLabel = util.getPredictedLabel(util.predictedLabelToMap(trainedModel.predict(attackReturn.attackedImage)))
     print("{} Attack Summary".format(attackName))
-    print("Was Attack Successful {}".format(attackReturn.wasSuccessFull))
+    print("Was Attack Successful: {}".format(attackReturn.wasSuccessFull))
     print("Time Took: {:.2f}s".format(attackReturn.time))
     print("Minimum Perturbation: {:.2f}".format(attackReturn.minPert))
     print("Output Label after Attack: {}".format(outLabel))

@@ -50,21 +50,21 @@ def resizeAndSplitData():
 
 
 @timeFunction
-def doBruteForce(imgArr, model) -> AttackReturn:
-    minPert, res = bruteForceAttack(imgArr, model)
+def doBruteForce(imgArr, trainedModel) -> AttackReturn:
+    minPert, res = bruteForceAttack(imgArr, trainedModel)
     return AttackReturn(res, minPert, True)
 
 
 @timeFunction
-def doGenAttack(imgArr, model, targetLabel, isVerbose=False) -> AttackReturn:
-    m = genAttack(imgArr, targetLabel, mutationRate=0.7, noiseLevel=0.012, populationSize=25, numberOfGenerations=300, model=model, isVerbose=isVerbose)
+def doGenAttack(imgArr, trainedModel, targetLabel, isVerbose=False) -> AttackReturn:
+    m = genAttack(imgArr, targetLabel, mutationRate=0.7, noiseLevel=0.012, populationSize=1, numberOfGenerations=3, model=trainedModel, isVerbose=isVerbose)
     return AttackReturn(m.image, m.getPerturbation(), m.isAttackSuccess)
 
 
 @timeFunction
-def doFSGMAttack(imgArr, model, isVerbose=False) -> AttackReturn:
+def doFSGMAttack(imgArr, trainedModel, isVerbose=False) -> AttackReturn:
     image = __fgsm_preprocess(imgArr[0])
-    totPert, adv_x, isFound = fgsmAttack(image, model, isVerbose=isVerbose)
+    totPert, adv_x, isFound = fgsmAttack(image, trainedModel, isVerbose=isVerbose)
     return AttackReturn(adv_x, totPert, isFound)
 
 
